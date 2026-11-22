@@ -1,0 +1,26 @@
+name: ratis
+
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: ratis-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: ratis
+      MYSQL_USER: ratis
+      MYSQL_PASSWORD: ratis
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./docker/mysql-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+volumes:
+  mysql_data:
