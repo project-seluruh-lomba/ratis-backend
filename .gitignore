@@ -14,8 +14,14 @@ coverage/
 *.log
 npm-debug.log*
 
+# Vercel
+.vercel
+
 # Editor and OS
 .vscode/
 .idea/
 .DS_Store
 Thumbs.db
+
+.vercel
+.env*
