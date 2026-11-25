@@ -6,3 +6,178 @@ datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
 }
+
+enum UserRole {
+  ADMIN
+  OWNER
+  STAFF
+  CUSTOMER
+}
+
+enum ShopStatus {
+  pending
+  aktif
+  ditolak
+  nonaktif
+}
+
+enum OrderStatus {
+  pending
+  diproses
+  selesai
+  dibatalkan
+}
+
+enum AdminAction {
+  LOGIN
+  APPROVE_SHOP
+  REJECT_SHOP
+  ACTIVATE_SHOP
+  DEACTIVATE_SHOP
+  CREATE_CATEGORY
+  UPDATE_CATEGORY
+  DELETE_CATEGORY
+  ACTIVATE_USER
+  DEACTIVATE_USER
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         UserRole @default(CUSTOMER)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  ownedShop     Shop?               @relation("ShopOwner")
+  staffShop     Shop?               @relation("ShopStaff", fields: [staffShopId], references: [id])
+  staffShopId   String?
+  orders        Order[]             @relation("CustomerOrders")
+  verifiedShops Shop[]              @relation("ShopVerifier")
+  statusChanges ShopStatusHistory[] @relation("StatusChangedBy")
+  adminLogs     AdminLog[]
+
+  @@index([role, isActive])
+  @@index([staffShopId])
+}
+
+model Shop {
+  id           String     @id @default(cuid())
+  ownerId      String     @unique
+  name         String
+  slug         String     @unique
+  description  String?    @db.Text
+  phone        String?
+  address      String?    @db.Text
+  nib          String?    @unique
+  photoUrl     String?
+  status       ShopStatus @default(pending)
+  statusReason String?    @db.Text
+  verifiedById String?
+  verifiedAt   DateTime?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  owner           User                @relation("ShopOwner", fields: [ownerId], references: [id])
+  verifier        User?               @relation("ShopVerifier", fields: [verifiedById], references: [id])
+  staffs          User[]              @relation("ShopStaff")
+  statusHistories ShopStatusHistory[]
+  products        Product[]
+  orders          Order[]
+
+  @@index([status])
+  @@index([createdAt])
+  @@index([verifiedById])
+}
+
+model ShopStatusHistory {
+  id          String      @id @default(cuid())
+  shopId      String
+  fromStatus  ShopStatus?
+  toStatus    ShopStatus
+  reason      String?     @db.Text
+  changedById String?
+  createdAt   DateTime    @default(now())
+
+  shop      Shop  @relation(fields: [shopId], references: [id])
+  changedBy User? @relation("StatusChangedBy", fields: [changedById], references: [id])
+
+  @@index([shopId, createdAt])
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  products Product[]
+}
+
+model Product {
+  id         String   @id @default(cuid())
+  shopId     String
+  categoryId String
+  name       String
+  price      Int
+  stock      Int      @default(0)
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  shop     Shop     @relation(fields: [shopId], references: [id])
+  category Category @relation(fields: [categoryId], references: [id])
+
+  @@index([shopId])
+  @@index([categoryId])
+}
+
+model Order {
+  id         String      @id @default(cuid())
+  code       String      @unique
+  shopId     String
+  customerId String
+  total      Int
+  status     OrderStatus @default(pending)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  shop     Shop        @relation(fields: [shopId], references: [id])
+  customer User        @relation("CustomerOrders", fields: [customerId], references: [id])
+  items    OrderItem[]
+
+  @@index([createdAt])
+  @@index([shopId, status])
+  @@index([customerId])
+}
+
+model OrderItem {
+  id          String @id @default(cuid())
+  orderId     String
+  productName String
+  quantity    Int
+  unitPrice   Int
+
+  order Order @relation(fields: [orderId], references: [id])
+
+  @@index([orderId])
+}
+
+model AdminLog {
+  id         String      @id @default(cuid())
+  adminId    String
+  action     AdminAction
+  targetType String
+  targetId   String
+  reason     String?     @db.Text
+  createdAt  DateTime    @default(now())
+
+  admin User @relation(fields: [adminId], references: [id])
+
+  @@index([adminId, createdAt])
+  @@index([targetType, targetId])
+}

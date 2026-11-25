@@ -1,15 +1,17 @@
+﻿import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { Controller, Get } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AppService } from './app.service';
+import { Public } from './common/decorators/public.decorator';
 
 @ApiTags('App')
 @Controller()
 export class AppController {
   constructor(private readonly appService: AppService) {}
 
-  @Get()
+  @Public()
   @ApiOperation({ summary: 'Info API Ratis' })
-  getHello(): string {
+  @Get()
+  getRoot(): string {
     return this.appService.getHello();
   }
 }

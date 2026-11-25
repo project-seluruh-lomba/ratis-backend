@@ -1,4 +1,4 @@
-import { Test, TestingModule } from '@nestjs/testing';
+﻿import { Test, TestingModule } from '@nestjs/testing';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -15,8 +15,8 @@ describe('AppController', () => {
   });
 
   describe('root', () => {
-    it('should return API status message', () => {
-      expect(appController.getHello()).toBe('Ratis API berjalan.');
+    it('should return "Ratis API berjalan."', () => {
+      expect(appController.getRoot()).toBe('Ratis API berjalan.');
     });
   });
 });
