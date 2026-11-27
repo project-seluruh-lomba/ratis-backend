@@ -60,24 +60,24 @@ export class AdminDashboardService {
     const trend = this.buildTrend(range, since, orders);
 
     return {
-        shops: {
-          pending,
-          aktif,
-          ditolak,
-          nonaktif,
-          total: pending + aktif + ditolak + nonaktif,
-        },
-        totalOrders,
-        omzet: omzetAgg._sum.total ?? 0,
-        trend,
-        pendingUmkm: pendingLatest.map((s) => ({
-          id: s.id,
-          name: s.name,
-          slug: s.slug,
-          ownerName: s.owner.name,
-          createdAt: s.createdAt,
-        })),
-        topShops: topShops.map((t) => ({
+      shops: {
+        pending,
+        aktif,
+        ditolak,
+        nonaktif,
+        total: pending + aktif + ditolak + nonaktif,
+      },
+      totalOrders,
+      omzet: omzetAgg._sum.total ?? 0,
+      trend,
+      pendingUmkm: pendingLatest.map((s) => ({
+        id: s.id,
+        name: s.name,
+        slug: s.slug,
+        ownerName: s.owner.name,
+        createdAt: s.createdAt,
+      })),
+      topShops: topShops.map((t) => ({
         shopId: t.shopId,
         name: shopMap.get(t.shopId)?.name ?? '-',
         slug: shopMap.get(t.shopId)?.slug ?? '-',
@@ -125,5 +125,3 @@ export class AdminDashboardService {
     return wib.toISOString().slice(0, 10);
   }
 }
-
-

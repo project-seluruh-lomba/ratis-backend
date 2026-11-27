@@ -1,5 +1,11 @@
 ﻿import 'dotenv/config';
-import { PrismaClient, UserRole, ShopStatus, OrderStatus } from '@prisma/client';
+import {
+  PrismaClient,
+  UserRole,
+  ShopStatus,
+  OrderStatus,
+  PayoutStatus,
+} from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
@@ -134,6 +140,40 @@ async function main() {
         },
       });
     }
+  }
+
+  const now = new Date();
+  const monthKey = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const payoutDefs = [
+    { seq: '094', shop: 'kopi-nusantara', bank: 'Bank BCA', account: '8045-9812-90', method: 'BI-FAST', netAmount: 1_845_000, commission: 18_650, status: PayoutStatus.menunggu, daysAgo: 0 },
+    { seq: '093', shop: 'batik-sekar', bank: 'Bank Mandiri', account: '1370-0199-2810', method: 'Realtime RTGS', netAmount: 4_210_000, commission: 42_500, status: PayoutStatus.menunggu, daysAgo: 0 },
+    { seq: '092', shop: 'keripik-jaya', bank: 'Bank BRI', account: '0206-0105-9921', method: 'BI-FAST', netAmount: 980_000, commission: 9_900, status: PayoutStatus.berhasil, daysAgo: 1 },
+    { seq: '091', shop: 'batik-sekar', bank: 'Bank BNI', account: '0941-2098-44', method: 'Kliring SKN', netAmount: 6_450_000, commission: 129_000, status: PayoutStatus.diverifikasi, daysAgo: 1 },
+    { seq: '090', shop: 'kopi-nusantara', bank: 'BS Syariah', account: '7120-4491-02', method: 'BI-FAST', netAmount: 1_155_000, commission: 11_660, status: PayoutStatus.terkirim, daysAgo: 1 },
+    { seq: '089', shop: 'keripik-jaya', bank: 'Bank Mandiri', account: '1370-2114-8890', method: 'Realtime RTGS', netAmount: 2_760_000, commission: 27_600, status: PayoutStatus.menunggu, daysAgo: 2 },
+    { seq: '088', shop: 'kopi-nusantara', bank: 'Bank BCA', account: '8045-1120-77', method: 'BI-FAST', netAmount: 3_320_000, commission: 33_200, status: PayoutStatus.diverifikasi, daysAgo: 2 },
+    { seq: '087', shop: 'batik-sekar', bank: 'Bank BRI', account: '0206-0112-8834', method: 'BI-FAST', netAmount: 5_890_000, commission: 58_900, status: PayoutStatus.berhasil, daysAgo: 3 },
+    { seq: '086', shop: 'keripik-jaya', bank: 'Bank BNI', account: '0941-2280-15', method: 'Kliring SKN', netAmount: 740_000, commission: 7_400, status: PayoutStatus.terkirim, daysAgo: 3 },
+    { seq: '085', shop: 'kopi-nusantara', bank: 'BS Syariah', account: '7120-5581-90', method: 'BI-FAST', netAmount: 2_180_000, commission: 21_800, status: PayoutStatus.menunggu, daysAgo: 4 },
+  ];
+  for (const p of payoutDefs) {
+    const shop = shops[p.shop].shop;
+    const id = `#PAY-${monthKey}-${p.seq}`;
+    const data = {
+      shopId: shop.id,
+      bank: p.bank,
+      account: p.account,
+      method: p.method,
+      netAmount: p.netAmount,
+      commission: p.commission,
+      status: p.status,
+      submittedAt: daysAgo(p.daysAgo),
+    };
+    await prisma.payout.upsert({
+      where: { id },
+      update: data,
+      create: { id, ...data },
+    });
   }
 
   console.log('Seed selesai:', { admin: adminEmail });

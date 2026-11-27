@@ -28,6 +28,13 @@ enum OrderStatus {
   dibatalkan
 }
 
+enum PayoutStatus {
+  menunggu
+  diverifikasi
+  berhasil
+  terkirim
+}
+
 enum AdminAction {
   LOGIN
   APPROVE_SHOP
@@ -39,6 +46,7 @@ enum AdminAction {
   DELETE_CATEGORY
   ACTIVATE_USER
   DEACTIVATE_USER
+  PROCESS_PAYOUT_BATCH
 }
 
 model User {
@@ -58,6 +66,7 @@ model User {
   verifiedShops Shop[]              @relation("ShopVerifier")
   statusChanges ShopStatusHistory[] @relation("StatusChangedBy")
   adminLogs     AdminLog[]
+  processedPayouts Payout[]         @relation("PayoutProcessor")
 
   @@index([role, isActive])
   @@index([staffShopId])
@@ -86,6 +95,7 @@ model Shop {
   statusHistories ShopStatusHistory[]
   products        Product[]
   orders          Order[]
+  payouts         Payout[]
 
   @@index([status])
   @@index([createdAt])
@@ -180,4 +190,27 @@ model AdminLog {
 
   @@index([adminId, createdAt])
   @@index([targetType, targetId])
+}
+
+model Payout {
+  id            String       @id
+  shopId        String
+  bank          String
+  account       String
+  method        String
+  netAmount     Int
+  commission    Int
+  status        PayoutStatus @default(menunggu)
+  submittedAt   DateTime     @default(now())
+  processedAt   DateTime?
+  processedById String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  shop        Shop  @relation(fields: [shopId], references: [id])
+  processedBy User? @relation("PayoutProcessor", fields: [processedById], references: [id])
+
+  @@index([status, submittedAt])
+  @@index([shopId])
+  @@index([processedById])
 }

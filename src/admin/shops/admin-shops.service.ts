@@ -217,7 +217,3 @@ export class AdminShopsService {
     }
   }
 }
-
-
-
-
