@@ -14,6 +14,10 @@ import { AdminShopsModule } from './admin/shops/admin-shops.module';
 import { AdminCategoriesModule } from './admin/categories/admin-categories.module';
 import { AdminDashboardModule } from './admin/dashboard/admin-dashboard.module';
 import { AdminPayoutsModule } from './admin/payouts/admin-payouts.module';
+import { AdminFinanceModule } from './admin/finance/admin-finance.module';
+import { AdminOrdersModule } from './admin/orders/admin-orders.module';
+import { AdminUsersModule } from './admin/users/admin-users.module';
+import { AdminLogsModule } from './admin/logs/admin-logs.module';
 import { HealthModule } from './health/health.module';
 
 @Module({
@@ -39,6 +43,10 @@ import { HealthModule } from './health/health.module';
     AdminCategoriesModule,
     AdminDashboardModule,
     AdminPayoutsModule,
+    AdminFinanceModule,
+    AdminOrdersModule,
+    AdminUsersModule,
+    AdminLogsModule,
   ],
   controllers: [AppController],
   providers: [

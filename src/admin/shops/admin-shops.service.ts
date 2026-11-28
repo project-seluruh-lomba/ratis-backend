@@ -77,6 +77,45 @@ export class AdminShopsService {
       },
     });
     if (!shop) throw new NotFoundException('UMKM tidak ditemukan');
+
+    const [staff, products, revenueAgg, lastOrder, outstandingAgg] =
+      await Promise.all([
+        this.prisma.user.findMany({
+          where: { staffShopId: shop.id },
+          orderBy: { createdAt: 'asc' },
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+            isActive: true,
+            createdAt: true,
+          },
+        }),
+        this.prisma.product.findMany({
+          where: { shopId: shop.id },
+          orderBy: { createdAt: 'desc' },
+          take: 50,
+          include: { category: { select: { id: true, name: true } } },
+        }),
+        this.prisma.order.aggregate({
+          where: { shopId: shop.id, status: 'selesai' },
+          _sum: { total: true },
+        }),
+        this.prisma.order.findFirst({
+          where: { shopId: shop.id },
+          orderBy: { createdAt: 'desc' },
+          select: { createdAt: true },
+        }),
+        this.prisma.payout.aggregate({
+          where: {
+            shopId: shop.id,
+            status: { in: ['menunggu', 'diverifikasi'] },
+          },
+          _sum: { netAmount: true },
+        }),
+      ]);
+
     return {
       data: {
         id: shop.id,
@@ -95,7 +134,27 @@ export class AdminShopsService {
         summary: {
           productCount: shop._count.products,
           orderCount: shop._count.orders,
+          revenue: revenueAgg._sum.total ?? 0,
+          lastOrderAt: lastOrder?.createdAt ?? null,
+          outstandingPayout: outstandingAgg._sum.netAmount ?? 0,
         },
+        staff: staff.map((member) => ({
+          id: member.id,
+          name: member.name,
+          email: member.email,
+          role: member.role,
+          isActive: member.isActive,
+          createdAt: member.createdAt,
+        })),
+        products: products.map((product) => ({
+          id: product.id,
+          name: product.name,
+          price: product.price,
+          stock: product.stock,
+          isActive: product.isActive,
+          category: product.category,
+          createdAt: product.createdAt,
+        })),
         statusHistory: shop.statusHistories.map((h) => ({
           id: h.id,
           fromStatus: h.fromStatus,

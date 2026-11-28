@@ -14,12 +14,7 @@ export class ResponseEnvelopeInterceptor implements NestInterceptor {
     return next.handle().pipe(
       map((data: unknown) => {
         if (data === undefined || data === null) return { data };
-        if (
-          typeof data === 'object' &&
-          data !== null &&
-          'meta' in data &&
-          'data' in data
-        )
+        if (typeof data === 'object' && data !== null && 'data' in data)
           return data;
         const response = context.switchToHttp().getResponse<Response>();
         if (response.statusCode === 204) return data;

@@ -62,11 +62,12 @@ model User {
   ownedShop     Shop?               @relation("ShopOwner")
   staffShop     Shop?               @relation("ShopStaff", fields: [staffShopId], references: [id])
   staffShopId   String?
-  orders        Order[]             @relation("CustomerOrders")
-  verifiedShops Shop[]              @relation("ShopVerifier")
-  statusChanges ShopStatusHistory[] @relation("StatusChangedBy")
+  orders        Order[]               @relation("CustomerOrders")
+  verifiedShops Shop[]                @relation("ShopVerifier")
+  statusChanges ShopStatusHistory[]   @relation("StatusChangedBy")
+  orderStatusChanges OrderStatusHistory[] @relation("OrderStatusChangedBy")
   adminLogs     AdminLog[]
-  processedPayouts Payout[]         @relation("PayoutProcessor")
+  processedPayouts Payout[]           @relation("PayoutProcessor")
 
   @@index([role, isActive])
   @@index([staffShopId])
@@ -156,13 +157,30 @@ model Order {
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @updatedAt
 
-  shop     Shop        @relation(fields: [shopId], references: [id])
-  customer User        @relation("CustomerOrders", fields: [customerId], references: [id])
-  items    OrderItem[]
+  shop            Shop                 @relation(fields: [shopId], references: [id])
+  customer        User                 @relation("CustomerOrders", fields: [customerId], references: [id])
+  items           OrderItem[]
+  statusHistories OrderStatusHistory[]
 
   @@index([createdAt])
   @@index([shopId, status])
   @@index([customerId])
+}
+
+model OrderStatusHistory {
+  id          String       @id @default(cuid())
+  orderId     String
+  fromStatus  OrderStatus?
+  toStatus    OrderStatus
+  note        String?      @db.Text
+  changedById String?
+  createdAt   DateTime     @default(now())
+
+  order     Order @relation(fields: [orderId], references: [id])
+  changedBy User? @relation("OrderStatusChangedBy", fields: [changedById], references: [id])
+
+  @@index([orderId, createdAt])
+  @@index([changedById])
 }
 
 model OrderItem {

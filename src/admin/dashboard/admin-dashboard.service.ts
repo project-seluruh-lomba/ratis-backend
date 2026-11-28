@@ -15,6 +15,7 @@ export class AdminDashboardService {
       ditolak,
       nonaktif,
       totalOrders,
+      completedOrders,
       omzetAgg,
       pendingLatest,
       topShops,
@@ -25,6 +26,7 @@ export class AdminDashboardService {
       this.prisma.shop.count({ where: { status: ShopStatus.ditolak } }),
       this.prisma.shop.count({ where: { status: ShopStatus.nonaktif } }),
       this.prisma.order.count(),
+      this.prisma.order.count({ where: { status: OrderStatus.selesai } }),
       this.prisma.order.aggregate({
         where: { status: OrderStatus.selesai },
         _sum: { total: true },
@@ -53,7 +55,12 @@ export class AdminDashboardService {
     const shops = shopIds.length
       ? await this.prisma.shop.findMany({
           where: { id: { in: shopIds } },
-          select: { id: true, name: true, slug: true },
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            owner: { select: { name: true } },
+          },
         })
       : [];
     const shopMap = new Map(shops.map((s) => [s.id, s]));
@@ -68,6 +75,7 @@ export class AdminDashboardService {
         total: pending + aktif + ditolak + nonaktif,
       },
       totalOrders,
+      completedOrders,
       omzet: omzetAgg._sum.total ?? 0,
       trend,
       pendingUmkm: pendingLatest.map((s) => ({
@@ -81,6 +89,7 @@ export class AdminDashboardService {
         shopId: t.shopId,
         name: shopMap.get(t.shopId)?.name ?? '-',
         slug: shopMap.get(t.shopId)?.slug ?? '-',
+        ownerName: shopMap.get(t.shopId)?.owner.name ?? '-',
         omzet: t._sum.total ?? 0,
         completedOrders: t._count._all,
       })),

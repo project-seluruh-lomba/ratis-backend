@@ -1,4 +1,5 @@
 ﻿import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -115,7 +116,7 @@ export class AdminCategoriesService {
   private cleanName(name: string) {
     const clean = name.trim().replace(/\s+/g, ' ');
     if (clean.length < 2 || clean.length > 40)
-      throw new ConflictException('Nama kategori tidak valid');
+      throw new BadRequestException('Nama kategori harus 2-40 karakter');
     return clean;
   }
 
