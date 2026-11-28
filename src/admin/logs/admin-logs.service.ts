@@ -19,7 +19,6 @@ const CATEGORY_ACTIONS: Record<LogCategory, AdminAction[]> = {
   ],
   Pengguna: [AdminAction.ACTIVATE_USER, AdminAction.DEACTIVATE_USER],
   Autentikasi: [AdminAction.LOGIN],
-  Payout: [AdminAction.PROCESS_PAYOUT_BATCH],
 };
 
 @Injectable()
@@ -193,29 +192,6 @@ export class AdminLogsService {
               map.set(`CATEGORY:${category.id}`, {
                 name: category.name,
                 meta: `Kategori • ${category.slug}`,
-              });
-            }
-          }),
-      );
-    }
-
-    const payoutIds = [...(idsByType.get('PAYOUT') ?? [])];
-    if (payoutIds.length) {
-      tasks.push(
-        this.prisma.payout
-          .findMany({
-            where: { id: { in: payoutIds } },
-            select: {
-              id: true,
-              shop: { select: { name: true } },
-              netAmount: true,
-            },
-          })
-          .then((payouts) => {
-            for (const payout of payouts) {
-              map.set(`PAYOUT:${payout.id}`, {
-                name: payout.shop.name,
-                meta: `Pencairan • Rp ${payout.netAmount.toLocaleString('id-ID')}`,
               });
             }
           }),

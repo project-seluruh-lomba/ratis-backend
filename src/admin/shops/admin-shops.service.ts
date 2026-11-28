@@ -62,9 +62,9 @@ export class AdminShopsService {
     };
   }
 
-  async detail(id: string) {
-    const shop = await this.prisma.shop.findUnique({
-      where: { id },
+  async detail(idOrSlug: string) {
+    const shop = await this.prisma.shop.findFirst({
+      where: { OR: [{ id: idOrSlug }, { slug: idOrSlug }] },
       include: {
         owner: {
           select: { id: true, name: true, email: true, isActive: true },
@@ -78,8 +78,7 @@ export class AdminShopsService {
     });
     if (!shop) throw new NotFoundException('UMKM tidak ditemukan');
 
-    const [staff, products, revenueAgg, lastOrder, outstandingAgg] =
-      await Promise.all([
+    const [staff, products, revenueAgg, lastOrder] = await Promise.all([
         this.prisma.user.findMany({
           where: { staffShopId: shop.id },
           orderBy: { createdAt: 'asc' },
@@ -102,19 +101,12 @@ export class AdminShopsService {
           where: { shopId: shop.id, status: 'selesai' },
           _sum: { total: true },
         }),
-        this.prisma.order.findFirst({
-          where: { shopId: shop.id },
-          orderBy: { createdAt: 'desc' },
-          select: { createdAt: true },
-        }),
-        this.prisma.payout.aggregate({
-          where: {
-            shopId: shop.id,
-            status: { in: ['menunggu', 'diverifikasi'] },
-          },
-          _sum: { netAmount: true },
-        }),
-      ]);
+      this.prisma.order.findFirst({
+        where: { shopId: shop.id },
+        orderBy: { createdAt: 'desc' },
+        select: { createdAt: true },
+      }),
+    ]);
 
     return {
       data: {
@@ -136,7 +128,6 @@ export class AdminShopsService {
           orderCount: shop._count.orders,
           revenue: revenueAgg._sum.total ?? 0,
           lastOrderAt: lastOrder?.createdAt ?? null,
-          outstandingPayout: outstandingAgg._sum.netAmount ?? 0,
         },
         staff: staff.map((member) => ({
           id: member.id,

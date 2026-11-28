@@ -17,7 +17,6 @@ export const LOG_CATEGORIES = [
   'Kategori',
   'Pengguna',
   'Autentikasi',
-  'Payout',
 ] as const;
 
 export type LogCategory = (typeof LOG_CATEGORIES)[number];
